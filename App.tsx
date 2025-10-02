@@ -6,9 +6,9 @@ import AppLoading from 'expo-app-loading';
 
 import Onboarding from './pages/Onboarding/onboarding';
 import Login from './pages/Login/Login';
-import StudentUserScreen from './pages/user/student_user'; 
-import ParentUserScreen from './pages/user/parent_user';
-import PersonnelUserScreen from './pages/user/personnel_user';
+import StudentUserScreen from './pages/Student/student_user'; 
+import ParentUserScreen from './pages/Student/parent_user';
+import PersonnelUserScreen from './pages/Student/personnel_user';
 
 import { StatusBar } from 'expo-status-bar';
 
