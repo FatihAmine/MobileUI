@@ -87,7 +87,7 @@ export default function Login() {
         {/* ✅ Navigate on Login */}
         <TouchableOpacity
           className="w-full bg-teal-600 rounded-xl py-5 flex items-center justify-center"
-          onPress={() => navigation.navigate("StudentUser")}
+          onPress={() => navigation.navigate("ParentUser")}
         >
           <Text className="font-inter-bold text-white text-lg">Se connecter</Text>
         </TouchableOpacity>

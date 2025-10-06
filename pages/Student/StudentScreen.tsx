@@ -1,125 +1,322 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList, TextInput, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// DashboardScreen.tsx
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Animated,
+  Platform,
+  UIManager,
+  Image,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
-const documentsData = [
-  { id: '1', type: 'Attestation', title: 'Attestation scolaire 2025', date: '2025-09-01' },
-  { id: '2', type: 'Bulletin', title: 'Bulletin de notes semestre 1', date: '2025-08-15' },
-  { id: '3', type: 'Convention', title: 'Convention de stage', date: '2025-09-10' },
-  // ... more docs
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// Activity feed data
+const ACTIVITIES = [
+  { 
+    id: "1", 
+    type: "document", 
+    title: "Attestation validée", 
+    desc: "Votre certificat de scolarité est maintenant disponible", 
+    time: "Il y a 2h", 
+    icon: "checkmark-circle", 
+    color: "#22c55e" 
+  },
+  { 
+    id: "2", 
+    type: "request", 
+    title: "Demande en cours", 
+    desc: "Votre demande de convention de stage est en traitement", 
+    time: "Il y a 5h", 
+    icon: "time-outline", 
+    color: "#f59e0b" 
+  },
+  { 
+    id: "3", 
+    type: "notification", 
+    title: "Nouveau bulletin disponible", 
+    desc: "Votre bulletin du semestre 2 est prêt", 
+    time: "Hier", 
+    icon: "document-text", 
+    color: "#3b82f6" 
+  },
+  { 
+    id: "4", 
+    type: "document", 
+    title: "Document téléchargé", 
+    desc: "Vous avez téléchargé votre attestation d'inscription", 
+    time: "Il y a 2 jours", 
+    icon: "download-outline", 
+    color: "#8b5cf6" 
+  },
 ];
 
-const filterTypes = ['All', 'Attestation', 'Bulletin', 'Convention'];
+// Help sections with expandable content
+const HELP_SECTIONS = [
+  {
+    id: "1",
+    title: "Comment faire une demande ?",
+    icon: "help-circle-outline",
+    color: "#3b82f6",
+    content: [
+      "1. Cliquez sur l'onglet 'Demandes' dans le menu principal",
+      "2. Appuyez sur le bouton 'Nouvelle demande'",
+      "3. Sélectionnez le type de document souhaité",
+      "4. Remplissez le formulaire avec vos informations",
+      "5. Validez et suivez l'état de votre demande en temps réel",
+    ],
+  },
+  {
+    id: "2",
+    title: "Pourquoi utiliser cette application ?",
+    icon: "star-outline",
+    color: "#f59e0b",
+    content: [
+      "• Gain de temps : Plus besoin de vous déplacer",
+      "• Disponibilité 24/7 : Accédez à vos documents à tout moment",
+      "• Traçabilité : Suivez toutes vos demandes en un coup d'œil",
+      "• Sécurité : Vos données sont cryptées et protégées",
+      "• Écologique : Réduisez votre empreinte papier",
+    ],
+  },
+  {
+    id: "3",
+    title: "Types de documents disponibles",
+    icon: "folder-outline",
+    color: "#8b5cf6",
+    content: [
+      "• Attestation de scolarité",
+      "• Certificat d'inscription",
+      "• Relevés de notes",
+      "• Bulletins semestriels",
+      "• Conventions de stage",
+      "• Attestations de réussite",
+    ],
+  },
+  {
+    id: "4",
+    title: "Délais de traitement",
+    icon: "time-outline",
+    color: "#ec4899",
+    content: [
+      "• Attestations simples : 24-48 heures",
+      "• Relevés de notes : 2-3 jours ouvrables",
+      "• Conventions de stage : 3-5 jours ouvrables",
+      "• Documents urgents : Contactez le support pour un traitement prioritaire",
+    ],
+  },
+];
 
-export default function StudentDashboard() {
-  const [filter, setFilter] = useState('All');
-  const [search, setSearch] = useState('');
-  const [selectedDoc, setSelectedDoc] = useState(null);
+// Quick stats
+const STATS = [
+  { label: "Documents", value: "12", icon: "document-text-outline", color: "#3b82f6" },
+  { label: "Demandes", value: "3", icon: "clipboard-outline", color: "#f59e0b" },
+  { label: "Notifications", value: "5", icon: "notifications-outline", color: "#ef4444" },
+  { label: "Taux de réussite", value: "94%", icon: "trophy-outline", color: "#22c55e" },
+];
 
-  // Filter & search documents
-  const filteredDocs = documentsData.filter(doc => {
-    return (filter === 'All' || doc.type === filter) &&
-      doc.title.toLowerCase().includes(search.toLowerCase());
+// Expandable Help Card Component
+const ExpandableHelpCard = ({ section }: { section: typeof HELP_SECTIONS[0] }) => {
+  const [expanded, setExpanded] = useState(false);
+  const animatedHeight = useRef(new Animated.Value(0)).current;
+  const animatedOpacity = useRef(new Animated.Value(0)).current;
+
+  const toggleExpand = () => {
+    if (expanded) {
+      Animated.parallel([
+        Animated.timing(animatedHeight, { toValue: 0, duration: 300, useNativeDriver: false }),
+        Animated.timing(animatedOpacity, { toValue: 0, duration: 200, useNativeDriver: false }),
+      ]).start(() => setExpanded(false));
+    } else {
+      setExpanded(true);
+      Animated.parallel([
+        Animated.timing(animatedHeight, { toValue: 1, duration: 300, useNativeDriver: false }),
+        Animated.timing(animatedOpacity, { toValue: 1, duration: 300, delay: 100, useNativeDriver: false }),
+      ]).start();
+    }
+  };
+
+  const heightInterpolate = animatedHeight.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, section.content.length * 35 + 40],
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-white px-4">
-      {/* Profile and Welcome */}
-      <View className="flex-row items-center mt-6 mb-4">
-        <Image
-          source={require('')}
-          className="w-16 h-16 rounded-full"
-        />
-        <View className="ml-4">
-          <Text className="text-xl font-bold">Welcome back, Student!</Text>
-          <Text className="text-gray-600">Here are your documents and notifications</Text>
+    <View className="bg-white rounded-2xl p-4 mb-3 shadow-sm" style={{ borderLeftColor: section.color, borderLeftWidth: 4 }}>
+      <Pressable onPress={toggleExpand} className="flex-row justify-between items-center">
+        <View className="flex-row items-center flex-1">
+          <Ionicons name={section.icon} size={28} color={section.color} />
+          <Text className="text-base font-semibold text-slate-900 ml-3">{section.title}</Text>
         </View>
-      </View>
+        <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={24} color="#64748b" />
+      </Pressable>
 
-      {/* Quick Links */}
-      <View className="flex-row justify-between mt-4 mb-6">
-        {['My Documents', 'Requests', 'Notifications'].map(label => (
-          <TouchableOpacity
-            key={label}
-            className="bg-teal-600 rounded-lg flex-1 mx-1 py-4 items-center"
-            onPress={() => {
-              // Navigate to respective screens or handle action
-            }}
-          >
-            <Text className="text-white font-medium">{label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Overview */}
-      <View className="flex-row justify-around bg-teal-100 p-4 rounded-lg mb-6">
-        <View className="items-center">
-          <Text className="text-3xl font-bold">{documentsData.length}</Text>
-          <Text>Documents</Text>
-        </View>
-        <View className="items-center">
-          <Text className="text-3xl font-bold">2</Text>
-          <Text>Pending Requests</Text>
-        </View>
-      </View>
-
-      {/* Filters and Search */}
-      <View className="flex-row mb-3">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {filterTypes.map(type => (
-            <TouchableOpacity
-              key={type}
-              className={`rounded-full border px-4 py-2 mr-2 ${filter === type ? 'bg-teal-600 border-teal-600' : 'border-gray-300'}`}
-              onPress={() => setFilter(type)}
-            >
-              <Text className={filter === type ? 'text-white' : 'text-gray-700'}>{type}</Text>
-            </TouchableOpacity>
+      {expanded && (
+        <Animated.View className="mt-4 pt-4 border-t border-slate-200 overflow-hidden"
+          style={{ height: heightInterpolate, opacity: animatedOpacity }}>
+          {section.content.map((line, index) => (
+            <Text key={index} className="text-sm text-slate-600 leading-6 mb-2">
+              {line}
+            </Text>
           ))}
-        </ScrollView>
+        </Animated.View>
+      )}
+    </View>
+  );
+};
+
+// Activity Item Component with animation
+const ActivityItem = ({ activity, index }: { activity: typeof ACTIVITIES[0]; index: number }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, delay: index * 150, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, delay: index * 150, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      className="bg-white rounded-2xl p-4 flex-row mb-3 shadow-sm"
+      style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+    >
+      <View className="w-12 h-12 rounded-xl justify-center items-center mr-3" style={{ backgroundColor: activity.color + "20" }}>
+        <Ionicons name={activity.icon} size={24} color={activity.color} />
       </View>
-      <TextInput
-        placeholder="Search documents..."
-        className="border border-gray-300 rounded-xl px-4 py-2 mb-4"
-        value={search}
-        onChangeText={setSearch}
+      <View className="flex-1">
+        <Text className="text-base font-semibold text-slate-900 mb-1">{activity.title}</Text>
+        <Text className="text-sm text-slate-600 mb-1">{activity.desc}</Text>
+        <Text className="text-xs text-slate-400">{activity.time}</Text>
+      </View>
+    </Animated.View>
+  );
+};
+
+// Quick Stat Card with animation
+const StatCard = ({ stat, index }: { stat: typeof STATS[0]; index: number }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, delay: index * 150, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, delay: index * 150, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      className="bg-white w-[48%] rounded-2xl p-4 items-center mb-3 shadow-sm"
+      style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+    >
+      <Ionicons name={stat.icon} size={28} color={stat.color} />
+      <Text className="text-3xl font-bold text-slate-900 mt-2">{stat.value}</Text>
+      <Text className="text-sm text-slate-600 mt-1">{stat.label}</Text>
+    </Animated.View>
+  );
+};
+
+// Main Dashboard Component
+export default function DashboardScreen() {
+  return (
+    <SafeAreaView className="flex-1 bg-slate-50">
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={["#fdfdfd", "#ededed", "#e0f7f4", "#f9fafb"]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Document List */}
-      <FlatList
-        data={filteredDocs}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            className="border-b border-gray-200 py-3"
-            onPress={() => setSelectedDoc(item)}
-          >
-            <Text className="font-semibold text-base">{item.title}</Text>
-            <Text className="text-gray-500 text-sm">{item.date}</Text>
-            <Text className="text-gray-600 text-xs mt-1">{item.type}</Text>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text className="text-center text-gray-400">No documents found.</Text>}
-        style={{ maxHeight: 240 }}
-      />
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View className="flex-row justify-between items-center mb-6">
+          <View>
+            <Text className="text-3xl font-bold text-slate-900">Bonjour Amine 👋</Text>
+            <Text className="text-base text-slate-600 mt-1">Voici votre tableau de bord</Text>
+          </View>
+          <Pressable className="p-1">
+            <Image
+              source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+              className="w-12 h-12 rounded-full"
+              style={{
+                borderWidth: 2,
+                borderColor: "#3b82f6",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            />
+          </Pressable>
+        </View>
 
-      {/* Document Viewer (Simple Preview Placeholder) */}
-      {selectedDoc && (
-        <View className="absolute bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-300 shadow-lg h-60">
-          <Text className="font-bold text-lg mb-2">{selectedDoc.title}</Text>
-          <Text className="mb-4 text-gray-600">Preview document content here (PDF/Word)</Text>
-          <View className="flex-row justify-around">
-            <TouchableOpacity className="bg-teal-600 rounded-lg px-6 py-2">
-              <Text className="text-white">Download</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="bg-teal-600 rounded-lg px-6 py-2">
-              <Text className="text-white">Share</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSelectedDoc(null)} className="px-6 py-2">
-              <Text className="text-teal-600 font-semibold">Close</Text>
-            </TouchableOpacity>
+        {/* Quick Stats */}
+        <View className="flex-row flex-wrap justify-between mb-6">
+          {STATS.map((stat, index) => (
+            <StatCard key={index} stat={stat} index={index} />
+          ))}
+        </View>
+
+        {/* Activity Section */}
+        <View className="mb-6">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-2xl font-bold text-slate-900">Activité récente</Text>
+            <Pressable>
+              <Text className="text-sm text-blue-600 font-semibold">Tout voir</Text>
+            </Pressable>
+          </View>
+          {ACTIVITIES.slice(0, 3).map((activity, index) => (
+            <ActivityItem key={activity.id} activity={activity} index={index} />
+          ))}
+        </View>
+
+        {/* Help & Guides Section */}
+        <View className="mb-6">
+          <Text className="text-2xl font-bold text-slate-900 mb-2">Aide & Guides</Text>
+          <Text className="text-sm text-slate-600 mb-3">Cliquez sur une section pour en savoir plus</Text>
+          {HELP_SECTIONS.map((section) => (
+            <ExpandableHelpCard key={section.id} section={section} />
+          ))}
+        </View>
+
+        {/* Quick Actions */}
+        <View className="mb-6">
+          <Text className="text-2xl font-bold text-slate-900 mb-4">Actions rapides</Text>
+          <View className="flex-row justify-between">
+            <Pressable className="w-[48%] bg-blue-600 rounded-2xl p-5 items-center shadow-lg active:opacity-80">
+              <Ionicons name="add-circle-outline" size={28} color="white" />
+              <Text className="text-white text-sm font-semibold mt-2 text-center">Nouvelle demande</Text>
+            </Pressable>
+            <Pressable className="w-[48%] bg-purple-600 rounded-2xl p-5 items-center shadow-lg active:opacity-80">
+              <Ionicons name="document-text-outline" size={28} color="white" />
+              <Text className="text-white text-sm font-semibold mt-2 text-center">Mes documents</Text>
+            </Pressable>
           </View>
         </View>
-      )}
+
+        {/* Tips Banner */}
+        <View className="bg-amber-100 rounded-2xl p-4 flex-row items-center" style={{ borderLeftWidth: 4, borderLeftColor: "#f59e0b", marginBottom: 10 }}>
+          <Ionicons name="bulb-outline" size={32} color="#f59e0b" />
+          <View className="flex-1 ml-3">
+            <Text className="text-base font-semibold text-amber-900 mb-1">Astuce du jour</Text>
+            <Text className="text-sm text-amber-800 leading-5">
+              Activez les notifications push pour être alerté instantanément de la validation de vos documents
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
