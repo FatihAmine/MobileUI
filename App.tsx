@@ -11,6 +11,9 @@ import * as NavigationBar from 'expo-navigation-bar';
 import SplashScreen from './pages/Splash/SplashScreen';
 import Onboarding from './pages/Onboarding/onboarding';
 import Login from './pages/Login/Login';
+import ForgotPassword from './pages/Login/ForgotPassword';
+import CodeVerification from "./pages/Login/CodeVerification";
+import ResetPassword from "./pages/Login/ResetPassword";
 import StudentTabs from './pages/Student/navigation/StudentTabs';
 import ParentTabs from './pages/Parent/navigation/ParentTabs';
 import PersoTabs from './pages/Personnel/navigation/PersoTabs';
@@ -62,6 +65,9 @@ export default function App() {
         <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Onboarding" component={Onboarding} />
           <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+          <Stack.Screen name="CodeVerification" component={CodeVerification} />
+          <Stack.Screen name="ResetPassword" component={ResetPassword} />
           <Stack.Screen name="StudentUser" component={StudentTabs} />
           <Stack.Screen name="ParentUser" component={ParentTabs} />
           <Stack.Screen name="PersoTabs" component={PersoTabs} />
