@@ -78,11 +78,14 @@ export default function Login() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity className="mb-8 ml-auto mt-2" onPress={() => {}}>
-          <Text className="text-teal-600 font-inter-medium">
-            Mot de passe oublié ?
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            className="mb-8 ml-auto mt-2"
+            onPress={() => navigation.navigate("ForgotPassword")}
+          >
+            <Text className="text-teal-600 font-inter-medium">
+              Mot de passe oublié ?
+            </Text>
+          </TouchableOpacity>
 
         {/* ✅ Navigate on Login */}
         <TouchableOpacity
